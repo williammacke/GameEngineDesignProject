@@ -1,3 +1,4 @@
+#include <cmath>
 template <class T, int r, int c>
 class Matrix {
 public:
@@ -50,7 +51,12 @@ class MatInitList {
 public:
 	MatInitList(Matrix<T,r,c>& m);
 	~MatInitList();
-	MatInitList<T,r,c>& operator,(T i);
+	template <class E>
+	MatInitList<T,r,c>& operator,(E i) {
+		(*mat)(pos) = i;
+		pos++;
+		return *this;
+	}
 private:
 	Matrix<T,r,c> *mat;
 	int pos;
@@ -63,12 +69,6 @@ MatInitList<T,r,c>::MatInitList(Matrix<T,r,c>& m) : mat(&m), pos(1) {
 template<class T, int r, int c>
 MatInitList<T,r,c>::~MatInitList() { }
 
-template<class T, int r, int c>
-MatInitList<T, r, c>& MatInitList<T,r,c>::operator,(T i) {
-	(*mat)(pos) = i;
-	pos++;
-	return *this;
-}
 
 template <class T, int r, int c>
 Matrix<T,r,c>::Matrix() {
@@ -90,8 +90,8 @@ T& Matrix<T,r,c>::operator() (int i) {
 	return data[i];
 }
 
-template <class T, int r, int c>
-MatInitList<T,r,c> operator<<(Matrix<T,r,c>& mat, T i) {
+template <class T, int r, int c, class E>
+MatInitList<T,r,c> operator<<(Matrix<T,r,c>& mat, E i) {
 	mat(0) = i;
 	MatInitList<T, r, c> initList(mat);
 	return initList;
@@ -214,4 +214,52 @@ rowVector<T,3> operator^(rowVector<T,3> vec1, rowVector<T,3> vec2) {
 	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
 	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
 	return vec;
+}
+
+template <class T, class E, class F, class G>
+Matrix<T, 4, 4> transpose(E x, F y, G z) {
+	auto mat = Identity<T, 4>();
+	mat(0, 3) = x;
+	mat(1, 3) = y;
+	mat(2, 3) = z;
+	return mat;
+}
+
+template <class T, class E>
+Matrix<T, 4, 4> rotationX(E angle) {
+	auto mat = Identity<T, 4>();
+	mat(1,1) = cos(angle);
+	mat(1,2) = -1*sin(angle);
+	mat(2,1) = sin(angle);
+	mat(2,2) = cos(angle);
+	return mat;
+}
+
+template <class T, class E>
+Matrix<T, 4, 4> rotationY(E angle) {
+	auto mat = Identity<T, 4>();
+	mat(0,0) = cos(angle);
+	mat(0,2) = sin(angle);
+	mat(2,0) = -1*sin(angle);
+	mat(2,2) = cos(angle);
+	return mat;
+}
+
+template <class T, class E>
+Matrix<T, 4, 4> rotationZ(E angle) {
+	auto mat = Identity<T, 4>();
+	mat(0,0) = cos(angle);
+	mat(0,1) = -1*sin(angle);
+	mat(1,0) = sin(angle);
+	mat(1,1) = cos(angle);
+	return mat;
+}
+
+template <class T, class E, class F, class G>
+Matrix<T, 4, 4> scale(E x, F y, G z) {
+	auto mat = Identity<T, 4>();
+	mat(0,0) = x;
+	mat(1,1) = y;
+	mat(2,2) = z;
+	return mat;
 }

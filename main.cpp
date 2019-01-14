@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "linAlg.h"
 
-Matrix<int, 5, 5> mat;
+Matrix<int, 1, 5> mat;
 colVector<int, 5> vec;
 
 
@@ -25,20 +25,19 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 int main() {
-	mat << 1,1,1,1,1,
-	    1,1,1,1,1,
-	    1,1,1,1,1,
-	    1,1,2,1,1,
-	    1,1,1,1,1;
-	mat = Identity<int,5>();
+	mat << 1,1,1,1,1;
 	vec << 2,2,3,2,2;
-	auto vec2 = trans(vec)*mat;
-	for (int i = 0; i < 5; i++) {
-		printf("%d ", vec2(i));
+	auto vec2 = (vec)*mat;
+	colVector<double, 4> vec3;
+	vec3 << 3,2.,1.,1.;
+	auto mat2 = rotationZ<double>(.9f);
+	vec3 = mat2*vec3;
+	for (int i = 0; i < 4; i++) {
+		printf("%f ", vec3(i));
 	}
 	printf("\n");
 	vec2 *= 5;
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 25; i++) {
 		printf("%d ", vec2(i));
 	}
 	printf("\n");
