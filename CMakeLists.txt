@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.10)
 project(Game_Engine)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(SRCS main.cpp utils.cpp)
+set(SRCS main.cpp utils.cpp models.cpp ModelGen.cpp memMan.cpp)
 
 find_package(PkgConfig REQUIRED)
 

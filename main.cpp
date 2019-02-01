@@ -1,8 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stdio.h>
+#include <cstdio>
 #include "linAlg.h"
 #include "utils.h"
+#include "memMan.h"
 
 
 float vData[] = {0.0f, 1.0f, 0.0f,
@@ -28,6 +29,20 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 int main() {
+	char* testS = tprintf("this is %d\n", 5);
+	printf("%s", testS);
+	auto blargh = poolAlloc<Matrix<float, 3, 3>>::alloc();
+	auto blargh2 = poolAlloc<Matrix<float, 3, 3>>::alloc(*blargh);
+	printf("%p\n", blargh);
+	colVector<int, 3> vec1;
+	colVector<int, 3> vec2;
+	(*blargh)*vec1;
+	poolAlloc<Matrix<float, 3, 3>>::remove(blargh);
+	printf("%p\n", blargh);
+	vec1 << 1,1,1;
+	vec2 << 1,1,1;
+	auto vec3 = trans(vec1)*vec2;
+	printf("%d\n", vec3);
 	if (!glfwInit()) {
 		return 1;
 	}
