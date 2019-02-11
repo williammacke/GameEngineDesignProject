@@ -25,3 +25,19 @@ char *vtprintf(char *fmt, va_list args) {
 void resetLevel() {
 	temp_level = 0;
 }
+
+
+StackAlloc::StackAlloc(size_t cap) {
+	start = malloc(cap);
+	sp = start;
+}
+
+StackAlloc::~StackAlloc() {
+	free(start);
+}
+
+void StackAlloc::freeTo(void* nsp) {
+	if (nsp > sp) 
+		return;
+	sp = nsp;
+}

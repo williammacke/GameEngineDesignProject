@@ -4,6 +4,9 @@
 #include "linAlg.h"
 #include "utils.h"
 #include "memMan.h"
+#include <iostream>
+#include <chrono>
+#include <cstdlib>
 
 
 float vData[] = {0.0f, 1.0f, 0.0f,
@@ -29,20 +32,48 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 int main() {
-	char* testS = tprintf("this is %d\n", 5);
-	printf("%s", testS);
-	auto blargh = poolAlloc<Matrix<float, 3, 3>>::alloc();
-	auto blargh2 = poolAlloc<Matrix<float, 3, 3>>::alloc(*blargh);
-	printf("%p\n", blargh);
-	colVector<int, 3> vec1;
-	colVector<int, 3> vec2;
-	(*blargh)*vec1;
-	poolAlloc<Matrix<float, 3, 3>>::remove(blargh);
-	printf("%p\n", blargh);
-	vec1 << 1,1,1;
-	vec2 << 1,1,1;
-	auto vec3 = trans(vec1)*vec2;
-	printf("%d\n", vec3);
+	const size_t testSize = 10000;
+	colVector<float, 4>* verts1[testSize];
+	colVector<float, 4>* verts2[testSize];
+	auto t = std::chrono::high_resolution_clock::now();
+	auto nt = std::chrono::high_resolution_clock::now();
+	auto diff = nt-t;
+	t = std::chrono::high_resolution_clock::now();
+	for (int j = 0; j < 10000; j++) {
+		for (int i = 0; i < testSize; i++) {
+			verts1[i] = tempAlloc<colVector<float, 4>>::alloc();
+			//verts1[i] = poolAlloc<colVector<float, 4>>::alloc();
+		}
+		for (int i = 0; i < testSize; i++) {
+			//poolAlloc<colVector<float, 4>>::remove(verts1[i]);
+		}
+		resetLevel();
+	}
+	nt = std::chrono::high_resolution_clock::now();
+	diff = nt-t;
+	std::cout << diff.count() << std::endl;
+	t = std::chrono::high_resolution_clock::now();
+	for (int j = 0; j < 10000; j++) {
+		for (int i = 0; i < testSize; i++) {
+			verts2[i] = new colVector<float, 4>();
+		}
+		for (int i = 0; i < testSize; i++) {
+			delete verts2[i];
+		}
+	}
+	nt = std::chrono::high_resolution_clock::now();
+	diff = nt-t;
+	std::cout << diff.count() << std::endl;
+	colVector<float, 3> axis;
+	axis << 0.0f,0.0f,1.0f;
+	auto quat = genQuaternion(axis, 3.14f/2);
+	colVector<float, 3> vec;
+	vec << 1.0f,0.0f,0.0f;
+	auto rot = rotate(vec, quat);
+	for (int i = 0; i < 3; i++) {
+		std::cout << rot(i) << " ";
+	}
+	std::cout << std::endl;
 	if (!glfwInit()) {
 		return 1;
 	}

@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <algorithm>
 #include <utility>
+#include <xmmintrin.h>
+#include <smmintrin.h>
 
 template <class T, int r, int c>
 class Matrix {
@@ -15,60 +17,72 @@ public:
 	T& operator() (int x, int y);
 	T& operator() (int i);
 	template <class E>
-	Matrix<T,r,c>& operator+=(Matrix<E,r,c>& mat) {
-		for (int i = 0; i < r*c; i++) {
-			data[i] += mat(i);
+	const Matrix<T,r,c>& operator+=(const Matrix<E,r,c>& mat) {
+		__m128 r1, r2;
+		if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+			for (int i = 0; i < r; i++) {
+				r1 = _mm_load_ps(&data[4*i]);
+				r2 = _mm_load_ps(&mat[4*i]);
+				r1 = _mm_add_ps(r1, r2);
+				_mm_store_ps(&data[4*i], r1);
+			}
+			return *this;
 		}
-		return *this;
+		else {
+			for (int i = 0; i < r*c; i++) {
+				data[i] += mat[i];
+			}
+			return *this;
+		}
 	}
 	template <class E>
-	Matrix<T,r,c>& operator+=(Matrix<E,r,c>&& mat) {
-		for (int i = 0; i < r*c; i++) {
-			data[i] += mat(i);
+	const Matrix<T,r,c>& operator-=(const Matrix<E,r,c>& mat) {
+		__m128 r1, r2;
+		if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+			for (int i = 0; i < r; i++) {
+				r1 = _mm_load_ps(&data[4*i]);
+				r2 = _mm_load_ps(&mat[4*i]);
+				r1 = _mm_sub_ps(r1, r2);
+				_mm_store_ps(&data[4*i], r1);
+			}
+			return *this;
 		}
-		return *this;
+		else {
+			for (int i = 0; i < r*c; i++) {
+				data[i] -= mat[i];
+			}
+			return *this;
+		}
 	}
 	template <class E>
-	Matrix<T,r,c>& operator-=(Matrix<E,r,c>& mat) {
-		for (int i = 0; i < r*c; i++) {
-			data[i] -= mat(i);
-		}
-		return *this;
-	}
-	template <class E>
-	Matrix<T,r,c>& operator-=(Matrix<E,r,c>&& mat) {
-		for (int i = 0; i < r*c; i++) {
-			data[i] -= mat(i);
-		}
-		return *this;
-	}
-	template <class E>
-	Matrix<T,r,c>& operator*=(Matrix<E,c,c>& mat) {
+	const Matrix<T,r,c>& operator*=(const Matrix<E,c,c>& mat) {
 		T data2[r*c];
-		for (int i = 0; i < r; i++) {
-			for (int j = 0; j < c; j++) {
-				T sum = T();
-				for (int k = 0; k < c; k++) {
-					sum += (*this)(i,k)*mat(k,j);
+		__m128 r1[4];
+		__m128 r2[4];
+		if constexpr(r == 4 && c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+			for (int i = 0; i < 4; i++) {
+				r2[i] = _mm_load_ps(&mat[4*i]);
+			}
+			for (int i = 0; i < 4; i++) {
+				for (int j = 0; j < 4; j++) {
+					r1[j] = _mm_set1_ps(data[i*4+j]);
+					r1[j] = _mm_mul_ps(r1[j], r2[j]);
 				}
-				data2[i*c+j] = sum;
+				for (int j = 1; j < 4; j++) {
+					r1[0] = _mm_add_ps(r1[0], r1[j]);
+				}
+				_mm_store_ps(&data2[4*i], r1[0]);
 			}
 		}
-		for (int i = 0; i < r*c; i++) {
-			data[i] = data2[i];
-		}
-		return *this;
-	}
-	template <class E>
-	Matrix<T,r,c>& operator*=(Matrix<E,c,c>&& mat) {
-		T data2[r*c];
-		for (int i = 0; i < r; i++) {
-			for (int j = 0; j < c; j++) {
-				T sum = T();
-				for (int k = 0; k < c; k++) {
-					sum += (*this)(i,k)*mat(k,j);
+		else {
+			for (int i = 0; i < r; i++) {
+				for (int j = 0; j < c; j++) {
+					T sum = T();
+					for (int k = 0; k < c; k++) {
+						sum += (*this)(i,k)*mat[k*c+j];
+					}
+					data2[i*c+j] = sum;
 				}
-				data2[i*c+j] = sum;
 			}
 		}
 		for (int i = 0; i < r*c; i++) {
@@ -77,18 +91,42 @@ public:
 		return *this;
 	}
 	template<class E>
-	Matrix<T,r,c>& operator*=(E&& val) { 
-		for (int i = 0; i < r*c; i++) { 
-			data[i] *= val; 
-		} 
-		return *this;
+	const Matrix<T,r,c>& operator*=(const E& val) { 
+		__m128 r1, r2;
+		if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+			r2 = _mm_set1_ps(val);
+			for (int i = 0; i < r; i++) {
+				r1 = _mm_load_ps(&data[4*i]);
+				r1 = _mm_mul_ps(r1, r2);
+				_mm_store_ps(&data[4*i], r1);
+			}
+			return *this;
+		}
+		else {
+			for (int i = 0; i < r*c; i++) { 
+				data[i] *= val; 
+			} 
+			return *this;
+		}
 	}
 	template<class E>
-	Matrix<T,r,c>& operator/=(E&& val) {
-		for (int i = 0; i < r*c; i++) {
-			data[i] /= val;
+	const Matrix<T,r,c>& operator/=(const E& val) {
+		__m128 r1, r2;
+		if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+			r2 = _mm_set1_ps(val);
+			for (int i = 0; i < r; i++) {
+				r1 = _mm_load_ps(&data[4*i]);
+				r1 = _mm_div_ps(r1, r2);
+				_mm_store_ps(&data[4*i], r1);
+			}
+			return *this;
 		}
-		return *this;
+		else {
+			for (int i = 0; i < r*c; i++) {
+				data[i] /= val;
+			}
+			return *this;
+		}
 	}
 private:
 	T data[r*c];
@@ -159,254 +197,218 @@ MatInitList<T,r,c> operator<<(Matrix<T,r,c>& mat, E i) {
 }
 
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator+(Matrix<T, r, c>& mat1, Matrix<E,r,c>& mat2) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator+(const Matrix<T, r, c>& mat1, const Matrix<E,r,c>& mat2) {
 	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)+mat2(i,j);
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		for (int i = 0; i < r; i++) {
+			r1 = _mm_load_ps(&mat1[4*i]);
+			r2 = _mm_load_ps(&mat2[4*i]);
+			r1 = _mm_add_ps(r1, r2);
+			_mm_store_ps(&mat(4*i), r1);
 		}
+		return mat;
 	}
-	return mat;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator+(Matrix<T, r, c>& mat1, Matrix<E,r,c>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)+mat2(i,j);
+	else {
+		for (int i = 0; i < r; i++) {
+			for (int j = 0; j < c; j++) {
+				mat(i,j) = mat1[i*c+j]+mat2[i*c+j];
+			}
 		}
+		return mat;
 	}
-	return mat;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator+(Matrix<T, r, c>&& mat1, Matrix<E,r,c>& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)+mat2(i,j);
-		}
-	}
-	return mat;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator+(Matrix<T, r, c>&& mat1, Matrix<E,r,c>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)+mat2(i,j);
-		}
-	}
-	return mat;
 }
 
 
 
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator-(Matrix<T, r, c>& mat1, Matrix<E, r, c>& mat2) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator-(const Matrix<T, r, c>& mat1, const Matrix<E, r, c>& mat2) {
 	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)-mat2(i,j);
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		for (int i = 0; i < r; i++) {
+			r1 = _mm_load_ps(&mat1[4*i]);
+			r2 = _mm_load_ps(&mat2[4*i]);
+			r1 = _mm_sub_ps(r1, r2);
+			_mm_store_ps(&mat(4*i), r1);
 		}
+		return mat;
 	}
-	return mat;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator-(Matrix<T, r, c>& mat1, Matrix<E, r, c>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)-mat2(i,j);
+	else {
+		for (int i = 0; i < r; i++) {
+			for (int j = 0; j < c; j++) {
+				mat(i,j) = mat1(i,j)-mat2(i,j);
+			}
 		}
+		return mat;
 	}
-	return mat;
 }
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator-(Matrix<T, r, c>&& mat1, Matrix<E, r, c>& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)-mat2(i,j);
-		}
-	}
-	return mat;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator-(Matrix<T, r, c>&& mat1, Matrix<E, r, c>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, r, c> mat;
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			mat(i,j) = mat1(i,j)-mat2(i,j);
-		}
-	}
-	return mat;
-}
-
 
 
 template <class T, int i, int j, int k, class E>
-Matrix<typename std::common_type_t<T, E>, i, k> operator*(Matrix<T, i, j>& mat1, Matrix<E, j, k>& mat2) {
+Matrix<typename std::common_type_t<T, E>, i, k> operator*(const Matrix<T, i, j>& mat1, const Matrix<E, j, k>& mat2) {
 	Matrix<typename std::common_type_t<T, E>, i, k> mat;
-	T sum = T();
-	for (int r1 = 0; r1 < i; r1++) {
-		for (int c1 = 0; c1 < k; c1++) {
-			sum = T();
-			for (int l = 0; l < j; l++) {
-					sum += mat1(r1,l)*mat2(l,c1);
+	__m128 r1[4];
+	__m128 r2[4];
+	__m128 r3[4];
+	float result[16];
+	if constexpr(i == 4 && j == 4 && k == 4 && std::is_same_v<float, T> && std::is_same_v<float, E>) {
+		r2[0] = _mm_load_ps(&mat2[0]);
+		r2[1] = _mm_load_ps(&mat2[4]);
+		r2[2] = _mm_load_ps(&mat2[8]);
+		r2[3] = _mm_load_ps(&mat2[12]);
+
+		for (int r = 0; r < 4; r++) {
+			for (int a = 0; a < 4; a++) {
+				r1[a] = _mm_set1_ps(mat1[r*4+a]);
 			}
-			mat(r1,c1) = sum;
-		}
-	}
-	return mat;
-}
-template <class T, int i, int j, int k, class E>
-Matrix<typename std::common_type_t<T, E>, i, k> operator*(Matrix<T, i, j>& mat1, Matrix<E, j, k>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, i, k> mat;
-	T sum = T();
-	for (int r1 = 0; r1 < i; r1++) {
-		for (int c1 = 0; c1 < k; c1++) {
-			sum = T();
-			for (int l = 0; l < j; l++) {
-					sum += mat1(r1,l)*mat2(l,c1);
+			for (int a = 0; a < 4; a++) {
+				r3[a] = _mm_mul_ps(r1[a], r2[a]);
 			}
-			mat(r1,c1) = sum;
-		}
-	}
-	return mat;
-}
-template <class T, int i, int j, int k, class E>
-Matrix<typename std::common_type_t<T, E>, i, k> operator*(Matrix<T, i, j>&& mat1, Matrix<E, j, k>& mat2) {
-	Matrix<typename std::common_type_t<T, E>, i, k> mat;
-	T sum = T();
-	for (int r1 = 0; r1 < i; r1++) {
-		for (int c1 = 0; c1 < k; c1++) {
-			sum = T();
-			for (int l = 0; l < j; l++) {
-					sum += mat1(r1,l)*mat2(l,c1);
+			for (int a = 1; a < 4; a++) {
+				r3[0] = _mm_add_ps(r3[0],  r3[a]);
 			}
-			mat(r1,c1) = sum;
+			_mm_store_ps(&mat(4*r), r3[0]);
 		}
+
+
+		return mat;
 	}
-	return mat;
-}
-template <class T, int i, int j, int k, class E>
-Matrix<typename std::common_type_t<T, E>, i, k> operator*(Matrix<T, i, j>&& mat1, Matrix<E, j, k>&& mat2) {
-	Matrix<typename std::common_type_t<T, E>, i, k> mat;
-	T sum = T();
-	for (int r1 = 0; r1 < i; r1++) {
-		for (int c1 = 0; c1 < k; c1++) {
-			sum = T();
-			for (int l = 0; l < j; l++) {
-					sum += mat1(r1,l)*mat2(l,c1);
+	else if constexpr(i == 4 && j == 4 && k == 1 && std::is_same_v<float, T> && std::is_same_v<float, E>) {
+		r1[0] = _mm_load_ps(&mat1[0]);
+		r1[1] = _mm_load_ps(&mat1[4]);
+		r1[2] = _mm_load_ps(&mat1[8]);
+		r1[3] = _mm_load_ps(&mat1[12]);
+		r2[0] = _mm_load_ps(&mat2[0]);
+		for (int r = 0; r < 4; r++) {
+			r1[r] = _mm_mul_ps(r1[r], r2[0]);
+		}
+		_MM_TRANSPOSE4_PS(r1[0], r1[1], r1[2], r1[3]);
+		for (int r = 1; r < 4; r++) {
+			r1[0] = _mm_add_ps(r1[0], r1[r]);
+		}
+		_mm_store_ps(&mat(0), r1[0]);
+		return mat;
+	}
+	else if constexpr(i == 1 && j == 4 && k == 4 && std::is_same_v<float, T> && std::is_same_v<float, E>) {
+		for (int r = 0; r < 4; r++) {
+			r2[0] = _mm_load_ps(&mat2[r*4]);
+			r1[r] = _mm_set1_ps(mat1[r]);
+			r1[r] = _mm_mul_ps(r1[r], r2[0]);
+		}
+		for (int r = 1; r < 4; r++) {
+			r1[0] = _mm_add_ps(r1[0], r1[r]);
+		}
+		_mm_store_ps(&mat(0), r1[0]);
+		return mat;
+	}
+	else {
+		typename std::common_type_t<T, E> sum = typename std::common_type_t<T, E>();
+		for (int r1 = 0; r1 < i; r1++) {
+			for (int c1 = 0; c1 < k; c1++) {
+				sum = typename std::common_type_t<T, E>();
+				for (int l = 0; l < j; l++) {
+						sum += mat1[r1*j+l]*mat2[l*k+c1];
+				}
+				mat(r1,c1) = sum;
 			}
-			mat(r1,c1) = sum;
 		}
+		return mat;
 	}
-	return mat;
 }
 
 template <class T, class E, int i>
-typename std::common_type_t<T, E> operator*(Matrix<E, 1, i>& mat1, Matrix<T, i, 1>& mat2) {
+typename std::common_type_t<T, E> operator*(const Matrix<E, 1, i>& mat1, const Matrix<T, i, 1>& mat2) {
 	typename std::common_type_t<E, T> sum = typename std::common_type_t<E, T>();
 	for (int j = 0; j < i; j++) {
-		sum += mat1(j)*mat2(j);
-	}
-	return sum;
-}
-template <class T, class E, int i>
-typename std::common_type_t<T, E> operator*(Matrix<E, 1, i>& mat1, Matrix<T, i, 1>&& mat2) {
-	typename std::common_type_t<E, T> sum = typename std::common_type_t<E, T>();
-	for (int j = 0; j < i; j++) {
-		sum += mat1(j)*mat2(j);
-	}
-	return sum;
-}
-template <class T, class E, int i>
-typename std::common_type_t<T, E> operator*(Matrix<E, 1, i>&& mat1, Matrix<T, i, 1>& mat2) {
-	typename std::common_type_t<E, T> sum = typename std::common_type_t<E, T>();
-	for (int j = 0; j < i; j++) {
-		sum += mat1(j)*mat2(j);
-	}
-	return sum;
-}
-template <class T, class E, int i>
-typename std::common_type_t<T, E> operator*(Matrix<E, 1, i>&& mat1, Matrix<T, i, 1>&& mat2) {
-	typename std::common_type_t<E, T> sum = typename std::common_type_t<E, T>();
-	for (int j = 0; j < i; j++) {
-		sum += mat1(j)*mat2(j);
+		sum += mat1[j]*mat2[j];
 	}
 	return sum;
 }
 
 
-
-
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator*(Matrix<T, r, c>& mat, E&& scal) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator*(const Matrix<T, r, c>& mat,const E& scal) {
 	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = scal*mat(i);
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		r1 = _mm_set1_ps(scal);
+		for (int i = 0; i < r; i++) {
+			r2 = _mm_load_ps(&mat[4*i]);
+			r2 = _mm_mul_ps(r1, r2);
+			_mm_store_ps(&mat2(4*i), r2);
+		}
+		return mat2;
 	}
-	return mat2;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator*(Matrix<T, r, c>&& mat, E&& scal) {
-	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = scal*mat(i);
+	else {
+		for (int i = 0; i < r*c; i++) {
+			mat2(i) = scal*mat[i];
+		}
+		return mat2;
 	}
-	return mat2;
 }
 
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator*(E&& scal, Matrix<T, r, c>& mat) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator*(const E& scal, const  Matrix<T, r, c>& mat) {
 	Matrix<std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = scal*mat(i);
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		r1 = _mm_set1_ps(scal);
+		for (int i = 0; i < r; i++) {
+			r2 = _mm_load_ps(&mat[4*i]);
+			r2 = _mm_mul_ps(r1, r2);
+			_mm_store_ps(&mat2(4*i), r2);
+		}
+		return mat2;
 	}
-	return mat2;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator*(E&& scal, Matrix<T, r, c>&& mat) {
-	Matrix<std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = scal*mat(i);
+	else {
+		for (int i = 0; i < r*c; i++) {
+			mat2(i) = scal*mat[i];
+		}
+		return mat2;
 	}
-	return mat2;
-}
-
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator/(Matrix<T, r, c>& mat, E&& scal) {
-	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/scal;
-	}
-	return mat2;
-}
-template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator/(Matrix<T, r, c>&& mat, E&& scal) {
-	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/scal;
-	}
-	return mat2;
 }
 
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator/(E&& scal, Matrix<T, r, c>& mat) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator/(const Matrix<T, r, c>& mat,const E& scal) {
 	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/scal;
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		r1 = _mm_set1_ps(scal);
+		for (int i = 0; i < r; i++) {
+			r2 = _mm_load_ps(&mat[4*i]);
+			r2 = _mm_div_ps(r2, r1);
+			_mm_store_ps(&mat2(4*i), r2);
+		}
+		return mat2;
 	}
-	return mat2;
+	else {
+		for (int i = 0; i < r*c; i++) {
+			mat2(i) = mat[i]/scal;
+		}
+		return mat2;
+	}
 }
+
 template <class T, int r, int c, class E>
-Matrix<typename std::common_type_t<T, E>, r, c> operator/(E&& scal, Matrix<T, r, c>&& mat) {
+Matrix<typename std::common_type_t<T, E>, r, c> operator/(const E& scal, const Matrix<T, r, c>& mat) {
 	Matrix<typename std::common_type_t<T, E>,r,c> mat2;
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/scal;
+	__m128 r1, r2;
+	if constexpr(c == 4 && std::is_same_v<T, float> && std::is_same_v<E, float>) {
+		r1 = _mm_set1_ps(scal);
+		for (int i = 0; i < r; i++) {
+			r2 = _mm_load_ps(&mat[4*i]);
+			r2 = _mm_div_ps(r2, r1);
+			_mm_store_ps(&mat2(4*i), r2);
+		}
+		return mat2;
 	}
-	return mat2;
+	else {
+		for (int i = 0; i < r*c; i++) {
+			mat2(i) = mat[i]/scal;
+		}
+		return mat2;
+	}
 }
 
 
@@ -444,21 +446,11 @@ Matrix<T, n, n> Identity() {
 }
 
 template <class T, int r, int c>
-Matrix<T,c,r> trans(Matrix<T,r,c>& mat) {
+Matrix<T,c,r> trans(const Matrix<T,r,c>& mat) {
 	Matrix<T,c,r> mat2;
 	for (int i = 0; i < c; i++) {
 		for (int j = 0; j < r; j++) {
-			mat2(i,j) = mat(j,i);
-		}
-	}
-	return mat2;
-}
-template <class T, int r, int c>
-Matrix<T,c,r> trans(Matrix<T,r,c>&& mat) {
-	Matrix<T,c,r> mat2;
-	for (int i = 0; i < c; i++) {
-		for (int j = 0; j < r; j++) {
-			mat2(i,j) = mat(j,i);
+			mat2(i,j) = mat[j*c+r];
 		}
 	}
 	return mat2;
@@ -467,76 +459,26 @@ Matrix<T,c,r> trans(Matrix<T,r,c>&& mat) {
 
 
 template <class T, class E>
-colVector<typename std::common_type_t<T, E>, 3> operator^(colVector<T, 3>& vec1, colVector<E, 3>& vec2) {
+colVector<typename std::common_type_t<T, E>, 3> operator^(const colVector<T, 3>& vec1, const colVector<E, 3>& vec2) {
 	colVector<typename std::common_type_t<T,E> ,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-
-
-template <class T, class E>
-colVector<typename std::common_type_t<T, E>, 3> operator^(colVector<T,3>& vec1, colVector<E,3>&& vec2) {
-	colVector<typename std::common_type_t<T,E> ,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-template <class T, class E>
-colVector<typename std::common_type_t<T, E>, 3> operator^(colVector<T,3>&& vec1, colVector<E,3>& vec2) {
-	colVector<typename std::common_type_t<T,E> ,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-template <class T, class E>
-colVector<typename std::common_type_t<T, E>, 3> operator^(colVector<T,3>&& vec1, colVector<E,3>&& vec2) {
-	colVector<typename std::common_type_t<T,E> ,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
+	vec(0) = vec1[1]*vec2[2]-vec1[2]*vec2[1];
+	vec(1) = vec1[2]*vec2[0]-vec1[0]*vec2[2];
+	vec(2) = vec1[0]*vec2[1]-vec1[1]*vec2[0];
 	return vec;
 }
 
 
 template <class E, class F>
-rowVector<typename std::common_type_t<F, E> ,3> operator^(rowVector<E,3>& vec1, rowVector<F,3>& vec2) {
+rowVector<typename std::common_type_t<F, E> ,3> operator^(const rowVector<E,3>& vec1, const rowVector<F,3>& vec2) {
 	rowVector<typename std::common_type_t<F, E>,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-template <class E, class F>
-rowVector<typename std::common_type_t<F, E> ,3> operator^(rowVector<E,3>& vec1, rowVector<F,3>&& vec2) {
-	rowVector<typename std::common_type_t<F, E>,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-template <class E, class F>
-rowVector<typename std::common_type_t<F, E> ,3> operator^(rowVector<E,3>&& vec1, rowVector<F,3>& vec2) {
-	rowVector<typename std::common_type_t<F, E>,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
-	return vec;
-}
-template <class E, class F>
-rowVector<typename std::common_type_t<F, E> ,3> operator^(rowVector<E,3>&& vec1, rowVector<F,3>&& vec2) {
-	rowVector<typename std::common_type_t<F, E>,3> vec;
-	vec(0) = vec1(1)*vec2(2)-vec1(2)*vec2(1);
-	vec(1) = vec1(2)*vec2(0)-vec1(0)*vec2(2);
-	vec(2) = vec1(0)*vec2(1)-vec1(1)*vec2(0);
+	vec(0) = vec1[1]*vec2[2]-vec1[2]*vec2[1];
+	vec(1) = vec1[2]*vec2[0]-vec1[0]*vec2[2];
+	vec(2) = vec1[0]*vec2[1]-vec1[1]*vec2[0];
 	return vec;
 }
 
 template <class E, class F, class G>
-Matrix<float, 4, 4> translate(E&& x, F&& y, G&& z) {
+Matrix<float, 4, 4> translate(const E& x, const F& y, const G& z) {
 	auto mat = Identity<float, 4>();
 	mat(0, 3) = x;
 	mat(1, 3) = y;
@@ -545,7 +487,7 @@ Matrix<float, 4, 4> translate(E&& x, F&& y, G&& z) {
 }
 
 template <class E>
-Matrix<float, 4, 4> rotationX(E&& angle) {
+Matrix<float, 4, 4> rotationX(const E& angle) {
 	auto mat = Identity<float, 4>();
 	mat(1,1) = cos(angle);
 	mat(1,2) = -1*sin(angle);
@@ -555,7 +497,7 @@ Matrix<float, 4, 4> rotationX(E&& angle) {
 }
 
 template <class E>
-Matrix<float, 4, 4> rotationY(E&& angle) {
+Matrix<float, 4, 4> rotationY(const E& angle) {
 	auto mat = Identity<float, 4>();
 	mat(0,0) = cos(angle);
 	mat(0,2) = sin(angle);
@@ -565,7 +507,7 @@ Matrix<float, 4, 4> rotationY(E&& angle) {
 }
 
 template <class E>
-Matrix<float, 4, 4> rotationZ(E&& angle) {
+Matrix<float, 4, 4> rotationZ(const E& angle) {
 	auto mat = Identity<float, 4>();
 	mat(0,0) = cos(angle);
 	mat(0,1) = -1*sin(angle);
@@ -575,7 +517,7 @@ Matrix<float, 4, 4> rotationZ(E&& angle) {
 }
 
 template <class E, class F, class G>
-Matrix<float, 4, 4> scale(E&& x, F&& y, G&& z) {
+Matrix<float, 4, 4> scale(const E& x, const F& y, const G& z) {
 	auto mat = Identity<float, 4>();
 	mat(0,0) = x;
 	mat(1,1) = y;
@@ -584,41 +526,26 @@ Matrix<float, 4, 4> scale(E&& x, F&& y, G&& z) {
 }
 
 template <class T, int r, int c>
-Matrix<T,r,c> normalize(Matrix<T,r,c>& mat) {
+Matrix<T,r,c> normalize(const Matrix<T,r,c>& mat) {
 	Matrix<T,r,c> mat2;
 	T sum = T();
 	for (int i = 0; i < r*c; i++) {
-		sum += mat(i)*mat(i);
+		sum += mat[i]*mat[i];
 	}
+	sum = sqrt(sum);
 	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/sum;
-	}
-	return mat2;
-}
-template <class T, int r, int c>
-Matrix<T,r,c> normalize(Matrix<T,r,c>&& mat) {
-	Matrix<T,r,c> mat2;
-	T sum = T();
-	for (int i = 0; i < r*c; i++) {
-		sum += mat(i)*mat(i);
-	}
-	for (int i = 0; i < r*c; i++) {
-		mat2(i) = mat(i)/sum;
+		mat2(i) = mat[i]/sum;
 	}
 	return mat2;
 }
 
 template <class T>
-T det(Matrix<T, 1, 1>& mat) {
-	return mat(0);
-}
-template <class T>
-T det(Matrix<T, 1, 1>&& mat) {
+T det(const Matrix<T, 1, 1>& mat) {
 	return mat(0);
 }
 
 template <class T, int n>
-T det(Matrix<T, n, n>& mat) {
+T det(const Matrix<T, n, n>& mat) {
 	T sum = T();
 	for (int i = 0; i < n; i++) {
 		Matrix<T, n-1, n-1> mat2;
@@ -630,46 +557,21 @@ T det(Matrix<T, n, n>& mat) {
 				if (k == i) continue;
 				int k2 = k;
 				if (k2 > i) k2--;
-				mat2(j2, k2) = mat(j,k);
+				mat2(j2, k2) = mat[j*n+k];
 			}
 		}
 		if (i % 2 == 0) {
-			sum += mat(i)*det(mat2);
+			sum += mat[i]*det(mat2);
 		}
 		else {
-			sum -= mat(i)*det(mat2);
-		}
-	}
-	return sum;
-}
-template <class T, int n>
-T det(Matrix<T, n, n>&& mat) {
-	T sum = T();
-	for (int i = 0; i < n; i++) {
-		Matrix<T, n-1, n-1> mat2;
-		for (int j = 0; j < n; j++) {
-			if (j == i) continue;
-			int j2 = j;
-			if (j2 > i) j2--;
-			for (int k = 0; k < n; k++) {
-				if (k == i) continue;
-				int k2 = k;
-				if (k2 > i) k2--;
-				mat2(j2, k2) = mat(j,k);
-			}
-		}
-		if (i % 2 == 0) {
-			sum += mat(i)*det(mat2);
-		}
-		else {
-			sum -= mat(i)*det(mat2);
+			sum -= mat[i]*det(mat2);
 		}
 	}
 	return sum;
 }
 
 template <class E, class F, class G>
-Matrix<float, 4, 4> lookAt(colVector<E, 3> cameraPos, colVector<F, 3> target, colVector<G, 3> up) {
+Matrix<float, 4, 4> lookAt(const colVector<E, 3>& cameraPos, const colVector<F, 3>& target, const colVector<G, 3>& up) {
 	Matrix <float, 4, 4> mat;
 	auto Z = normalize(cameraPos-target);
 	auto X = noramlize(up^Z);
@@ -682,7 +584,7 @@ Matrix<float, 4, 4> lookAt(colVector<E, 3> cameraPos, colVector<F, 3> target, co
 }
 
 template <class T, class E, class F, class G>
-Matrix<float, 4, 4> projection(T&& fovy, E&& aspect, F&& zNear, G&& zFar) {
+Matrix<float, 4, 4> projection(const T& fovy, const E& aspect, const F& zNear, const G& zFar) {
 	Matrix<float, 4, 4> mat;
 	auto tanHalfFovy = tan(fovy / 2.0);
 	mat(0,0) = 1.0 / (aspect * tanHalfFovy);
@@ -697,7 +599,7 @@ template <class T>
 using quaternion = colVector<T, 4>;
 
 template <class T, class E>
-quaternion<float> genQuaternion(const colVector<T, 3> &axis, E theta) {
+quaternion<float> genQuaternion(const colVector<T, 3> &axis,const E& theta) {
 	quaternion<float> quat;
 	float sinTh = sin(theta/2);
 	quat << sinTh*axis[0],sinTh*axis[1],sinTh*axis[2],cos(theta/2);
@@ -705,7 +607,7 @@ quaternion<float> genQuaternion(const colVector<T, 3> &axis, E theta) {
 }
 
 template <class T, class E>
-quaternion<typename std::common_type_t<T, E>> quatMult(const quaternion<T> &quat1,const quaternion<T> &quat2) {
+quaternion<typename std::common_type_t<T, E>> quatMult(const quaternion<T> &quat1,const quaternion<E> &quat2) {
 	quaternion<typename std::common_type_t<T, E>> quat;
 	quat << quat2[3]*quat1[0]+quat1[3]*quat2[0]+quat1[1]*quat2[2]-quat1[2]*quat2[1], quat2[3]*quat1[1]+quat1[3]*quat2[1]+quat1[2]*quat2[0]-quat2[2]*quat1[0], quat2[3]*quat1[2]+quat1[3]*quat2[2]+quat1[0]*quat2[1]-quat1[1]*quat2[0], quat1[3]*quat2[3]-quat1[0]*quat2[0]-quat1[1]*quat2[1]-quat1[2]*quat2[2];
 	return quat;
@@ -727,5 +629,6 @@ colVector<typename std::common_type_t<T, E>,3> rotate(const colVector<T, 3> &vec
 	vec2 << result(0),result(1),result(2);
 	return vec2;
 }
+
 
 #endif
