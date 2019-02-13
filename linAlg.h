@@ -601,8 +601,13 @@ using quaternion = colVector<T, 4>;
 template <class T, class E>
 quaternion<float> genQuaternion(const colVector<T, 3> &axis,const E& theta) {
 	quaternion<float> quat;
+	T normal = T();
+	for (int i = 0; i < 3; i++) {
+		normal += axis[i]*axis[i];
+	}
+	normal = sqrt(normal);
 	float sinTh = sin(theta/2);
-	quat << sinTh*axis[0],sinTh*axis[1],sinTh*axis[2],cos(theta/2);
+	quat << sinTh*axis[0]/normal,sinTh*axis[1]/normal,sinTh*axis[2]/normal,cos(theta/2);
 	return quat;
 }
 
@@ -630,5 +635,25 @@ colVector<typename std::common_type_t<T, E>,3> rotate(const colVector<T, 3> &vec
 	return vec2;
 }
 
+template <class T, class E, int r, int c>
+bool operator==(const Matrix<T, r, c>& mat1, const Matrix<E, r, c>& mat2) {
+	static float err = .01;
+	if constexpr(std::is_floating_point_v<T> || std::is_floating_point_v<E>) {
+		for (int i = 0; i < r*c; i++) {
+			if (abs(mat1[i]-mat2[i]) > err) {
+				return false;
+			}
+		}
+		return true;
+	}
+	else {
+		for (int i = 0; i < r*c; i++) {
+			if (mat1[i] != mat2[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+}
 
 #endif

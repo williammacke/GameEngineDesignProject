@@ -7,6 +7,7 @@
 #include <iostream>
 #include <chrono>
 #include <cstdlib>
+#include "Components.h"
 
 
 float vData[] = {0.0f, 1.0f, 0.0f,
@@ -14,9 +15,6 @@ float vData[] = {0.0f, 1.0f, 0.0f,
 		1.0f, -1.0f, 0.0f};
 
 
-void error_callback(int err, const char* description) {
-	fprintf(stderr, "Error: %s\n", description);
-}
 
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -32,48 +30,21 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 }
 
 int main() {
-	const size_t testSize = 10000;
-	colVector<float, 4>* verts1[testSize];
-	colVector<float, 4>* verts2[testSize];
-	auto t = std::chrono::high_resolution_clock::now();
-	auto nt = std::chrono::high_resolution_clock::now();
-	auto diff = nt-t;
-	t = std::chrono::high_resolution_clock::now();
-	for (int j = 0; j < 10000; j++) {
-		for (int i = 0; i < testSize; i++) {
-			verts1[i] = tempAlloc<colVector<float, 4>>::alloc();
-			//verts1[i] = poolAlloc<colVector<float, 4>>::alloc();
-		}
-		for (int i = 0; i < testSize; i++) {
-			//poolAlloc<colVector<float, 4>>::remove(verts1[i]);
-		}
-		resetLevel();
-	}
-	nt = std::chrono::high_resolution_clock::now();
-	diff = nt-t;
-	std::cout << diff.count() << std::endl;
-	t = std::chrono::high_resolution_clock::now();
-	for (int j = 0; j < 10000; j++) {
-		for (int i = 0; i < testSize; i++) {
-			verts2[i] = new colVector<float, 4>();
-		}
-		for (int i = 0; i < testSize; i++) {
-			delete verts2[i];
-		}
-	}
-	nt = std::chrono::high_resolution_clock::now();
-	diff = nt-t;
-	std::cout << diff.count() << std::endl;
 	colVector<float, 3> axis;
-	axis << 0.0f,0.0f,1.0f;
+	axis << 0.0f,1.0f,1.0f;
 	auto quat = genQuaternion(axis, 3.14f/2);
 	colVector<float, 3> vec;
-	vec << 1.0f,0.0f,0.0f;
+	vec << 0.0f,0.0f,1.0f;
 	auto rot = rotate(vec, quat);
 	for (int i = 0; i < 3; i++) {
 		std::cout << rot(i) << " ";
 	}
 	std::cout << std::endl;
+	auto g = GameEngine::get();
+	for (int i = 0; i < 10000000; i++) {
+		g.update();
+	}
+	/*
 	if (!glfwInit()) {
 		return 1;
 	}
@@ -142,5 +113,6 @@ int main() {
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
+	*/
 }
 

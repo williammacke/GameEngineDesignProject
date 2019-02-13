@@ -3,7 +3,7 @@ project(Game_Engine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(SRCS main.cpp utils.cpp models.cpp ModelGen.cpp memMan.cpp)
+set(SRCS main.cpp utils.cpp models.cpp ModelGen.cpp memMan.cpp Components.cpp)
 
 find_package(PkgConfig REQUIRED)
 
