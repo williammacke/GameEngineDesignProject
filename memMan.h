@@ -191,7 +191,7 @@ T* StackAlloc::alloc(Args&&...args) {
 template <typename T, typename...Args>
 T* StackAlloc::allocNum(size_t num, Args&&...args) {
 	T *items = (T*) sp;
-	sp += num*sizeof(T);
+	sp = sp+num*sizeof(T);
 	for (int i = 0; i < num; i++) {
 		new (items+i) T(args...);
 	}

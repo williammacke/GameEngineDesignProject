@@ -4,14 +4,6 @@
 #include <GLFW/glfw3.h>
 #include "memMan.h"
 
-class MemoryManager {
-public:
-	MemoryManager();
-	~MemoryManager();
-	static MemoryManager& get();
-private:
-	StackAlloc s;
-};
 
 class WindowManager {
 public:
@@ -39,9 +31,9 @@ public:
 	~GameEngine();
 	static GameEngine& get();
 	void update();
+	StackAlloc s;
 private:
 	RenderEngine& r;
-	MemoryManager& m;
 };
 
 #endif

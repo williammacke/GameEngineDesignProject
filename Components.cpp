@@ -2,17 +2,6 @@
 #include <cstdlib>
 #include <cstdio>
 
-MemoryManager::MemoryManager() : s(256000000) {
-
-}
-
-MemoryManager::~MemoryManager() {
-}
-
-MemoryManager& MemoryManager::get() {
-	static MemoryManager m;
-	return m;
-}
 
 
 static void error_callback(int err, const char* description) {
@@ -66,8 +55,7 @@ void RenderEngine::render() {
 	glfwSwapBuffers(w.getWindow());
 }
 
-GameEngine::GameEngine() : r(RenderEngine::get()), 
-	m(MemoryManager::get()) {
+GameEngine::GameEngine() : r(RenderEngine::get()), s(51200000000) {
 }
 
 GameEngine::~GameEngine() {

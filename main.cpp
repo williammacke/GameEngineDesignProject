@@ -41,9 +41,7 @@ int main() {
 	}
 	std::cout << std::endl;
 	auto g = GameEngine::get();
-	for (int i = 0; i < 10000000; i++) {
-		g.update();
-	}
+	colVector<float, 4> *vecs = g.s.allocNum<colVector<float,4>>(5000);
 	/*
 	if (!glfwInit()) {
 		return 1;
