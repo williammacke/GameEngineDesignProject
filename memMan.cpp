@@ -29,11 +29,15 @@ void resetLevel() {
 
 StackAlloc::StackAlloc(size_t cap) {
 	start = malloc(cap);
+	if (start == nullptr) {
+		exit(1);
+	}
 	sp = start;
 }
 
 StackAlloc::~StackAlloc() {
-	free(start);
+	if (start != nullptr)
+		free(start);
 }
 
 void StackAlloc::freeTo(void* nsp) {

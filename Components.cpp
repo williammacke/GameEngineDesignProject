@@ -9,7 +9,6 @@ static void error_callback(int err, const char* description) {
 }
 
 WindowManager::WindowManager() {
-	printf("blargh\n");
 	if (!glfwInit()) {
 		exit(1);
 	}
@@ -55,7 +54,7 @@ void RenderEngine::render() {
 	glfwSwapBuffers(w.getWindow());
 }
 
-GameEngine::GameEngine() : r(RenderEngine::get()), s(51200000000) {
+GameEngine::GameEngine() : r(RenderEngine::get()), s(512000) {
 }
 
 GameEngine::~GameEngine() {
