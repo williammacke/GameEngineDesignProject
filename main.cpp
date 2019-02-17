@@ -11,25 +11,7 @@
 #include <cassert>
 
 
-float vData[] = {0.0f, 1.0f, 0.0f,
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f};
 
-
-
-
-
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
-	    glClearColor(0,0,0,1);
-    }
-    if (key == GLFW_KEY_S && action == GLFW_PRESS) {
-	    glClearColor(1,0,0,1);
-    }
-}
 
 
 int main() {
@@ -133,7 +115,7 @@ int main() {
 	std::cout << "Matrix Translate Time: " << diff.count() << std::endl;
 	time1 = std::chrono::high_resolution_clock::now();
 
-	for (int i = 0; i < 100; i++) {
+	while (g->isRunning()) {
 		g->update();
 	}
 

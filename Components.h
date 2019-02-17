@@ -21,8 +21,6 @@ public:
 	~RenderEngine();
 	static RenderEngine& get();
 	void render();
-private:
-	WindowManager& w;
 };
 
 class GameEngine {
@@ -31,9 +29,8 @@ public:
 	~GameEngine();
 	static GameEngine& get();
 	void update();
+	bool isRunning();
 	StackAlloc s;
-private:
-	RenderEngine& r;
 };
 
 #endif

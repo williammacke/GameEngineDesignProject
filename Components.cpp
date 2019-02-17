@@ -8,6 +8,19 @@ static void error_callback(int err, const char* description) {
 	fprintf(stderr, "Error: %s\n", description);
 }
 
+static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    }
+    if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+	    glClearColor(0,0,0,1);
+    }
+    if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+	    glClearColor(1,0,0,1);
+    }
+}
+
 WindowManager::WindowManager() {
 	if (!glfwInit()) {
 		exit(1);
@@ -19,6 +32,7 @@ WindowManager::WindowManager() {
 	glfwSetErrorCallback(error_callback);
 	window = glfwCreateWindow(1000, 1000, "test", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
+	glfwSetKeyCallback(window, key_callback);
 }
 
 WindowManager::~WindowManager() {
@@ -36,7 +50,8 @@ GLFWwindow* WindowManager::getWindow() {
 }
 
 
-RenderEngine::RenderEngine() : w(WindowManager::get()) {
+RenderEngine::RenderEngine()  {
+	WindowManager::get();
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 	glClearColor(1,1,1,1);
 }
@@ -51,10 +66,11 @@ RenderEngine& RenderEngine::get() {
 
 void RenderEngine::render() {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glfwSwapBuffers(w.getWindow());
+	glfwSwapBuffers(WindowManager::get().getWindow());
 }
 
-GameEngine::GameEngine() : r(RenderEngine::get()), s(512000) {
+GameEngine::GameEngine() : s(512000) {
+	RenderEngine::get();
 }
 
 GameEngine::~GameEngine() {
@@ -66,5 +82,10 @@ GameEngine& GameEngine::get() {
 }
 
 void GameEngine::update() {
-	r.render();
+	RenderEngine::get().render();
+	glfwPollEvents();
+}
+
+bool GameEngine::isRunning() {
+	return !glfwWindowShouldClose(WindowManager::get().getWindow());
 }
