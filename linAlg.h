@@ -272,8 +272,6 @@ Matrix<typename std::common_type_t<T, E>, i, k> operator*(const Matrix<T, i, j>&
 			}
 			_mm_store_ps(&mat(4*r), r3[0]);
 		}
-
-
 		return mat;
 	}
 	else if constexpr(i == 4 && j == 4 && k == 1 && std::is_same_v<float, T> && std::is_same_v<float, E>) {
@@ -528,6 +526,19 @@ Matrix<float, 4, 4> translate(const E& x, const F& y, const G& z) {
 	return mat;
 }
 
+template <class E, class F, class G>
+void translate(const E& x, const F& y, const G& z, Matrix<float, 4, 4>& mat) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (i == j) mat(i,j) = 1.0f;
+			else mat(i,j) = 0.0f;
+		}
+	}
+	mat(0, 3) = x;
+	mat(1, 3) = y;
+	mat(2, 3) = z;
+}
+
 template <class E>
 Matrix<float, 4, 4> rotationX(const E& angle) {
 	auto mat = Identity<float, 4>();
@@ -536,6 +547,20 @@ Matrix<float, 4, 4> rotationX(const E& angle) {
 	mat(2,1) = sin(angle);
 	mat(2,2) = cos(angle);
 	return mat;
+}
+
+template <class E>
+void rotationX(const E& angle, Matrix<float, 4, 4>& mat) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			if (i == j) mat(i,j) = 1.0f;
+			else mat(i,j) = 0.0f;
+		}
+	}
+	mat(1,1) = cos(angle);
+	mat(1,2) = -1*sin(angle);
+	mat(2,1) = sin(angle);
+	mat(2,2) = cos(angle);
 }
 
 template <class E>
@@ -549,6 +574,19 @@ Matrix<float, 4, 4> rotationY(const E& angle) {
 }
 
 template <class E>
+void rotationY(const E& angle, Matrix<float, 4, 4>& mat) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			mat(i,j) = i==j?1.0f:0.0f;
+		}
+	}
+	mat(0,0) = cos(angle);
+	mat(0,2) = sin(angle);
+	mat(2,0) = -1*sin(angle);
+	mat(2,2) = cos(angle);
+}
+
+template <class E>
 Matrix<float, 4, 4> rotationZ(const E& angle) {
 	auto mat = Identity<float, 4>();
 	mat(0,0) = cos(angle);
@@ -558,6 +596,19 @@ Matrix<float, 4, 4> rotationZ(const E& angle) {
 	return mat;
 }
 
+template <class E>
+void rotationZ(const E& angle, Matrix<float, 4, 4>& mat) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			mat(i,j) = i==j?1.0f:0.0f;
+		}
+	}
+	mat(0,0) = cos(angle);
+	mat(0,1) = -1*sin(angle);
+	mat(1,0) = sin(angle);
+	mat(1,1) = cos(angle);
+}
+
 template <class E, class F, class G>
 Matrix<float, 4, 4> scale(const E& x, const F& y, const G& z) {
 	auto mat = Identity<float, 4>();
@@ -565,6 +616,18 @@ Matrix<float, 4, 4> scale(const E& x, const F& y, const G& z) {
 	mat(1,1) = y;
 	mat(2,2) = z;
 	return mat;
+}
+
+template <class E, class F, class G>
+void scale(const E& x, const F& y, const G& z, Matrix<float, 4, 4>& mat) {
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			mat(i,j) = i==j?1.0f:0.0f;
+		}
+	}
+	mat(0,0) = x;
+	mat(1,1) = y;
+	mat(2,2) = z;
 }
 
 template <class T, int r, int c>
