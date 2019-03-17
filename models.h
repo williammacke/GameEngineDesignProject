@@ -10,7 +10,7 @@ extern GLuint currentProgram;
 
 class Model {
 public:
-	Model(GLuint VAO, GLuint shaderProgram, void *offset, size_t size, std::string name);
+	Model(GLuint VAO, GLuint shaderProgram, void *offset, size_t size, std::string name, void *data);
 	Model(const Model& m);
 	~Model();
 	GLuint VAO;
@@ -18,6 +18,7 @@ public:
 	void *offset;
 	size_t size;
 	std::string name;
+	void *data;
 };
 
 class Entity {
@@ -28,7 +29,7 @@ public:
 	Matrix<float, 4, 4> getModel();
 private:
 	Matrix<float, 4, 4> translation;
-	Matrix<float, 4, 4> rotation;
+	quaternion<float> rotation;
 	Matrix<float, 4, 4> scaling;
 };
 

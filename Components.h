@@ -3,6 +3,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "memMan.h"
+#include <unordered_map>
+#include <string>
+#include "Camera.h"
 
 
 class WindowManager {
@@ -21,6 +24,9 @@ public:
 	~RenderEngine();
 	static RenderEngine& get();
 	void render();
+private:
+	std::unordered_map<std::string, GLuint> programs;
+	Camera c;
 };
 
 class GameEngine {

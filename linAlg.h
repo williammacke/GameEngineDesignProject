@@ -804,4 +804,19 @@ bool operator==(const Matrix<T, r, c>& mat1, const Matrix<E, r, c>& mat2) {
 	}
 }
 
+template <class T>
+Matrix<T, 4, 4> quatToMat(const quaternion<T>& quat) {
+	Matrix<T, 4, 4> mat1;
+	Matrix<T, 4, 4> mat2;
+	mat1 << quat[3],quat[2],-1*quat[1],quat[0],
+		-1*quat[2],quat[3],quat[0],quat[1],
+		quat[1],-1*quat[0],quat[3],quat[2],
+		-1*quat[0],-1*quat[1],-1*quat[2],quat[3];
+	mat2 << quat[3],quat[2],-1*quat[1],-1*quat[0],
+		-1*quat[2],quat[3],quat[0],-1*quat[1],
+		quat[1],-1*quat[0],quat[3],-1*quat[2],
+		quat[0],quat[1],quat[2],quat[3];
+	return mat1*mat2;
+}
+
 #endif

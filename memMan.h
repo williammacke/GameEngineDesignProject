@@ -25,44 +25,44 @@ extern void resetLevel();
 
 
 template <class T>
-struct poolAlloc {
+class PoolAlloc {
+public:
+	PoolAlloc();
+	~PoolAlloc();
 	template <typename...Args>
-	static T* alloc(Args&&...args);
-	static void remove(T*& item);
-	static void remove(T*&& item);
-	static void freeAll();
+	T* alloc(Args&&...args);
+	void remove(T*& item);
+	void remove(T*&& item);
+	void freeAll();
 private:
-	static size_t cap;
-	static size_t lastCap;
-	static T *data;
-	static T* avail;
-	static std::vector<T*> starts;
-	static size_t current;
+	size_t cap;
+	size_t lastCap;
+	T *data;
+	T* avail;
+	std::vector<T*> starts;
+	size_t current;
 };
 
-template <class T>
-size_t poolAlloc<T>::cap = 4096*2;
-
-template <class T>
-size_t poolAlloc<T>::lastCap = 0;
 
 
 template <class T>
-T* poolAlloc<T>::data = nullptr;
-
-template<class T>
-T* poolAlloc<T>::avail = nullptr;
+PoolAlloc<T>::PoolAlloc() {
+	cap = 4096*2;
+	data = (T*) malloc(cap*sizeof(T));
+	starts.push_back(data);
+	lastCap = cap;
+	current = 0;
+}
 
 template <class T>
-std::vector<T*> poolAlloc<T>::starts = std::vector<T*>();
-
-template <class T>
-size_t poolAlloc<T>::current = 0;
+PoolAlloc<T>::~PoolAlloc() {
+}
 
 template <class T>
 template <typename...Args>
-T* poolAlloc<T>::alloc(Args&&...args) {
+T* PoolAlloc<T>::alloc(Args&&...args) {
 	static_assert(sizeof(T) >= sizeof(void*));
+	/*
 	if (data == nullptr) {
 		printf("test\n");
 		data = (T*) malloc(cap*sizeof(T));
@@ -71,14 +71,10 @@ T* poolAlloc<T>::alloc(Args&&...args) {
 			printf("We're done\n");
 		}
 		starts.push_back(data);
-		/*
-		for (int i = 0; i < cap; i++) {
-			avail.push(data+i);
-		}
-		*/
 		lastCap = cap;
 		current = 0;
 	}
+	*/
 	if (avail == nullptr && current >= lastCap-1) {
 		printf("test\n");
 		data = (T*) malloc(cap*sizeof(T));
@@ -108,7 +104,7 @@ T* poolAlloc<T>::alloc(Args&&...args) {
 }
 
 template <class T>
-void poolAlloc<T>::remove(T*& item) {
+void PoolAlloc<T>::remove(T*& item) {
 	static_assert(sizeof(T) >= sizeof(void*));
 	assert(item != nullptr);
 	item->~T();
@@ -119,7 +115,7 @@ void poolAlloc<T>::remove(T*& item) {
 }
 
 template <class T>
-void poolAlloc<T>::remove(T*&& item) {
+void PoolAlloc<T>::remove(T*&& item) {
 	static_assert(sizeof(T) >= sizeof(void*));
 	item->~T();
 	T** temp = (T**) item;
@@ -128,7 +124,7 @@ void poolAlloc<T>::remove(T*&& item) {
 }
 
 template <class T>
-void poolAlloc<T>::freeAll() {
+void PoolAlloc<T>::freeAll() {
 	static_assert(sizeof(T) >= sizeof(void*));
 	for (auto& s:starts) {
 		free(s);

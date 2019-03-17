@@ -1,6 +1,8 @@
 #include "Components.h"
+#include "utils.h"
 #include <cstdlib>
 #include <cstdio>
+#include <fstream>
 
 
 
@@ -53,6 +55,12 @@ GLFWwindow* WindowManager::getWindow() {
 RenderEngine::RenderEngine()  {
 	WindowManager::get();
 	gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
+	std::string w1, w2, w3;
+	std::ifstream shaderFile("shaders/programs.dat");
+	while (!shaderFile.eof()) {
+		shaderFile >> w1 >> w2 >> w3;
+		programs[w1] = LoadShader(("shaders/"+w2).c_str(), ("shaders/"+w3).c_str());
+	}
 	glClearColor(1,1,1,1);
 }
 

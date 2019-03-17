@@ -13,8 +13,6 @@
 
 
 
-
-
 int main() {
 	auto g = &GameEngine::get();
 	auto time1 = std::chrono::high_resolution_clock::now();

@@ -13,5 +13,8 @@ struct BufferData {
 };
 
 BufferData genCube();
+BufferData genPlane(int r, int c);
+BufferData genPyramid();
+BufferData genSphere(int prec);
 
 #endif
