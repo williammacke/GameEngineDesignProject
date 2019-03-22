@@ -1,6 +1,8 @@
 #include "ModelGen.h"
+#include <iostream>
 
-BufferData genBube() {
+BufferData genCube() {
+	/*
 	std::vector<float> vertices = { -1.0f,1.0f,-1.0f,//top
 					1.0f,1.0f,-1.0f,
 					1.0f,1.0f,1.0f,
@@ -27,12 +29,12 @@ BufferData genBube() {
 					-1.0f,-1.0f,1.0f
 
 	};
-	std::vector<unsigned int> indices = {0,1,2, 2,3,0,//top
-						4,5,6, 6,7,4,//bottom
-						8,9,10, 10,11,8,//left
-						12,13,14, 14,15,12, //right
-						16,17,18, 18,19,16, //front
-						20,21,22, 22,23,20 //back
+	std::vector<unsigned int> indices = {2,1,0, 0,3,2,//top
+						6,5,4, 4,7,6,//bottom
+						10,9,8, 8,11,10,//left
+						14,13,12, 12,15,14, //right
+						18,17,16, 16,19,18, //front
+						22,21,20, 20,23,22 //back
 
 	};
 	std::vector<float> normals = {0.0f, 1.0f, 0.0f, //top
@@ -88,6 +90,16 @@ BufferData genBube() {
 						1.0f,1.0f,
 						0.0f,1.0f
 	};
+*/
+	std::vector<float> vertices = {-1.0f,-1.0f,0.0f,
+					1.0f,-1.0f,0.0f,
+					0.0f,1.0f,0.0f};
+	std::vector<unsigned int> indices = {0,2,1};
+	std::vector<float> normals;
+	std::vector<float> textureCoord = {0.0f,0.0f,
+						1.0f,0.0f,
+						0.5f,1.0f};
+
 	return BufferData{vertices,indices,normals,textureCoord};
 }
 
@@ -96,31 +108,37 @@ BufferData genPlane(int r, int c) {
 	std::vector<unsigned int> indices((r-1)*(c-1)*6);
 	std::vector<float> normals(r*c*3);
 	std::vector<float> textureCoord(r*c*2);
-	for (int i = 0; i < r; i++) {
-		for (int j = 0; j < c; j++) {
-			vertices[i*c+j] = -1.0f+2*((float) i/(r-1));
-			vertices[i*c+j+1] = 0.0f;
-			vertices[i*c+j+2] = -1.0f+2*((float) j/(c-1));
+	for (int i = 0; i < c; i++) {
+		for (int j = 0; j < r; j++) {
+			vertices[(i*c+j)*3] = -1.0f+2*((float) i/(c-1));
+			vertices[(i*c+j)*3+1] = 0.0f;
+			vertices[(i*c+j)*3+2] = -1.0f+2*((float) j/(r-1));
 
 
 			normals[i*c+j] = 0.0f;
 			normals[i*c+j+1] = 1.0f;
 			normals[i*c+j+2] = 0.0f;
 
-			textureCoord[i*c+j] = (float) i/(r-1);
-			textureCoord[i*c+j+1] = (float) j/(c-1);
+			textureCoord[(i*c+j)*2] = (float) i/(c-1);
+			textureCoord[(i*c+j)*2+1] = (float) j/(r-1);
 		}
 	}
+	for (auto& val:vertices) {
+		std::cout << val << std::endl;
+	}
 
-	for (int i = 0; i < r-1; i++) {
-		for (int j = 0; j < c-1; j++) {
-			indices[i*(c-1)+j] = i*c+j;
-			indices[i*(c-1)+j+1] = (i+1)*c+j;
-			indices[i*(c-1)+j+2] = i*c+j+1;
-			indices[i*(c-1)+j+3] = i*c+j+1;
-			indices[i*(c-1)+j+4] = (i+1)*c+j;
-			indices[i*(c-1)+j+5] = (i+1)*c+j+1;
+	for (int i = 0; i < c-1; i++) {
+		for (int j = 0; j < r-1; j++) {
+			indices[(i*(c-1)+j)*6] = i*c+j;
+			indices[(i*(c-1)+j)*6+1] = (i+1)*c+j;
+			indices[(i*(c-1)+j)*6+2] = (i)*c+j+1;
+			indices[(i*(c-1)+j)*6+3] = (i)*c+j+1;
+			indices[(i*(c-1)+j)*6+4] = (i+1)*c+j;
+			indices[(i*(c-1)+j)*6+5] = (i+1)*c+j+1;
 		}
+	}
+	for (auto& val:indices) {
+		std::cout << val << std::endl;
 	}
 	return BufferData{vertices, indices, normals, textureCoord};
 }

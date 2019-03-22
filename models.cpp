@@ -3,6 +3,9 @@
 GLuint currentVAO = -1;
 GLuint currentProgram  = -1;
 
+Model::Model() {
+}
+
 Model::Model(GLuint VAO, GLuint shaderProgram, void *offset, 
 		size_t size, std::string name, void *data):
 	VAO(VAO), shaderProgram(shaderProgram), offset(offset), 
@@ -19,7 +22,7 @@ offset(m.offset), size(m.size), name(m.name), data(m.data)
 Model::~Model() { }
 
 
-Entity::Entity(Model m) : m(m) 
+Entity::Entity(Model *m) : m(m) 
 {
 	translation = Identity<float, 4>();
 	colVector<float, 3> axis;

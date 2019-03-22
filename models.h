@@ -10,6 +10,7 @@ extern GLuint currentProgram;
 
 class Model {
 public:
+	Model();
 	Model(GLuint VAO, GLuint shaderProgram, void *offset, size_t size, std::string name, void *data);
 	Model(const Model& m);
 	~Model();
@@ -23,9 +24,9 @@ public:
 
 class Entity {
 public:
-	Entity(Model m);
+	Entity(Model *m);
 	~Entity();
-	Model m;
+	Model *m;
 	Matrix<float, 4, 4> getModel();
 private:
 	Matrix<float, 4, 4> translation;

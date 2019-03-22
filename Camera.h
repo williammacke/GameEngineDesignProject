@@ -7,6 +7,7 @@ public:
 	Camera();
 	~Camera();
 	Matrix<float, 4, 4> getCameraMat();
+	void move(colVector<float, 3> pos);
 private:
 	colVector<float, 3> cameraPos;
 	quaternion<float> rotation;

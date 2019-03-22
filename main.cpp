@@ -14,9 +14,28 @@
 
 
 int main() {
+	colVector<float, 4> vec;
+	vec << 0,0,1,1;
+	Camera cam;
+
+	//auto mMat = rotationX(3.14/2)*translate(0,0,5);
+	auto mMat = translate(0,0,50)*rotationX(3.14/2);
+	vec = mMat*vec;
+	std::cout << vec(0) << "\t" << vec(1) << "\t" << vec(2) << "\t" << vec(3) << std::endl;
+	colVector<float,3> moveVec;
+	moveVec << -5,0,0;
+	cam.move(moveVec);
+	vec = cam.getCameraMat()*vec;
+	std::cout << vec(0) << "\t" << vec(1) << "\t" << vec(2) << "\t" << vec(3) << std::endl;
+	auto pMat = projection(3.14f/4, 1.0f, .1f,100.0f);
+	vec = pMat*vec;
+	std::cout << vec(0) << "\t" << vec(1) << "\t" << vec(2) << "\t" << vec(3) << std::endl;
+
+
 	auto g = &GameEngine::get();
+	auto m = &MemoryManager::get();
 	auto time1 = std::chrono::high_resolution_clock::now();
-	colVector<float, 4> *vecs = g->s.allocNum<colVector<float,4>>(5000);
+	colVector<float, 4> *vecs = m->getStack().allocNum<colVector<float,4>>(5000);
 	auto time2 = std::chrono::high_resolution_clock::now();
 	auto diff = time2-time1;
 	std::cout << "Stack Allocation Time: " << diff.count() << std::endl;

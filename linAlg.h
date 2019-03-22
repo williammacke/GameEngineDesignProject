@@ -675,11 +675,11 @@ T det(const Matrix<T, n, n>& mat) {
 	return sum;
 }
 
-template <class E, class F, class G>
-Matrix<float, 4, 4> lookAt(const colVector<E, 3>& cameraPos, const colVector<F, 3>& target, const colVector<G, 3>& up) {
+template <class E, class F, class T>
+Matrix<float, 4, 4> lookAt(const colVector<E, 3>& cameraPos, const colVector<F, 3>& target, const colVector<T, 3>& up) {
 	Matrix <float, 4, 4> mat;
-	auto Z = normalize(cameraPos-target);
-	auto X = noramlize(up^Z);
+	auto Z = normalize(target-cameraPos);
+	auto X = normalize(up^Z);
 	auto Y = Z^X;
 	mat << X(0),X(1),X(2),-1*X*cameraPos,
 	    Y(0),Y(1),Y(2),-1*Y*cameraPos,
@@ -692,11 +692,13 @@ template <class T, class E, class F, class G>
 Matrix<float, 4, 4> projection(const T& fovy, const E& aspect, const F& zNear, const G& zFar) {
 	Matrix<float, 4, 4> mat;
 	auto tanHalfFovy = tan(fovy / 2.0);
-	mat(0,0) = 1.0 / (aspect * tanHalfFovy);
-	mat(1,1) = 1.0 / tanHalfFovy;
-	mat(2,2) = (zFar + zNear) / (zFar - zNear);
+	mat(0,0) = 1.0f / (aspect * tanHalfFovy);
+	mat(1,1) = 1.0f / tanHalfFovy;
+	mat(2,2) = (zFar)  / (zFar - zNear);
 	mat(2,3) = 1.0;
-	mat(3,2) = - (2.0 * zNear * zFar) / (zFar - zNear);
+	mat(3,2) =  -(zNear * zFar) / (zFar - zNear);
+
+
 	return mat;
 }
 

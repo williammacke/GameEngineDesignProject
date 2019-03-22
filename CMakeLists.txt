@@ -3,7 +3,7 @@ project(Game_Engine)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(SRCS main.cpp utils.cpp models.cpp ModelGen.cpp memMan.cpp Components.cpp Camera.cpp)
+set(SRCS main.cpp utils.cpp models.cpp ModelGen.cpp memMan.cpp Components.cpp Camera.cpp stb_image.cpp)
 
 find_package(PkgConfig REQUIRED)
 
@@ -25,3 +25,5 @@ target_link_libraries(main ${GLFW_LIBRARIES}  dl nlohmann_json::nlohmann_json)
 
 add_custom_command(TARGET main POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders)
+add_custom_command(TARGET main POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/Assets ${CMAKE_CURRENT_BINARY_DIR}/Assets)

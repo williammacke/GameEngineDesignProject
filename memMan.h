@@ -16,12 +16,7 @@
 #include <chrono>
 #include <type_traits>
 
-extern uint8_t temp_buffer[];
-extern size_t temp_level;
 
-extern char* tprintf(char *fmt, ...);
-extern char* vtprintf(char *fmt, va_list args);
-extern void resetLevel();
 
 
 template <class T>
@@ -56,6 +51,9 @@ PoolAlloc<T>::PoolAlloc() {
 
 template <class T>
 PoolAlloc<T>::~PoolAlloc() {
+	for (auto& val:starts) {
+		free(val);
+	}
 }
 
 template <class T>
@@ -135,27 +133,37 @@ void PoolAlloc<T>::freeAll() {
 	cap = 4096*2;
 }
 
-template <class T>
-struct tempAlloc {
-	template <typename...Args>
-	static T* alloc(Args&&...args);
-	template <typename...Args>
-	static T* allocNum(size_t num, Args&&...args);
+class tempAlloc {
+public:
+	tempAlloc();
+	~tempAlloc();
+	template <class T, typename...Args>
+	T* alloc(Args&&...args);
+	template <class T,typename...Args>
+	 T* allocNum(size_t num, Args&&...args);
+	char* tprintf(char *fmt, ...);
+	char* vtprintf(char *fmt, va_list argss);
+	void resetLevel();
+private:
+	void *data;
+	size_t cap;
+	size_t temp_level;
 };
 
-template <class T>
-template <typename...Args>
-T* tempAlloc<T>::alloc(Args&&...args) {
-	T* item = (T*) &temp_buffer[temp_level];
+
+
+
+template <class T, typename...Args>
+T* tempAlloc::alloc(Args&&...args) {
+	T* item = (T*) data+temp_level;
 	new (item) T(args...);
 	temp_level += sizeof(T);
 	return item;
 }
 
-template <class T>
-template <typename...Args>
-T* tempAlloc<T>::allocNum(size_t num,Args&&...args) {
-	T* start = (T*) &temp_buffer[temp_level];
+template <class T,typename...Args>
+T* tempAlloc::allocNum(size_t num,Args&&...args) {
+	T* start = (T*) data+temp_level;
 	for (int i = 0; i < num; i++) {
 		new (start+i) T(args...);
 	}
