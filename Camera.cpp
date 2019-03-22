@@ -41,5 +41,12 @@ Matrix<float, 4, 4> Camera::getCameraMat() {
 }
 
 void Camera::move(colVector<float, 3> pos) {
-	cameraPos += pos;
+	cameraPos += rotate(pos, rotation);
+}
+
+void Camera::turn(float amount) {
+	colVector<float, 3> axis;
+	axis << 0,1,0;
+	auto quat = genQuaternion(axis, amount);
+	rotation = quatMult(quat, rotation);
 }

@@ -2,7 +2,6 @@
 #include <iostream>
 
 BufferData genCube() {
-	/*
 	std::vector<float> vertices = { -1.0f,1.0f,-1.0f,//top
 					1.0f,1.0f,-1.0f,
 					1.0f,1.0f,1.0f,
@@ -90,15 +89,6 @@ BufferData genCube() {
 						1.0f,1.0f,
 						0.0f,1.0f
 	};
-*/
-	std::vector<float> vertices = {-1.0f,-1.0f,0.0f,
-					1.0f,-1.0f,0.0f,
-					0.0f,1.0f,0.0f};
-	std::vector<unsigned int> indices = {0,2,1};
-	std::vector<float> normals;
-	std::vector<float> textureCoord = {0.0f,0.0f,
-						1.0f,0.0f,
-						0.5f,1.0f};
 
 	return BufferData{vertices,indices,normals,textureCoord};
 }

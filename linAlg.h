@@ -694,9 +694,9 @@ Matrix<float, 4, 4> projection(const T& fovy, const E& aspect, const F& zNear, c
 	auto tanHalfFovy = tan(fovy / 2.0);
 	mat(0,0) = 1.0f / (aspect * tanHalfFovy);
 	mat(1,1) = 1.0f / tanHalfFovy;
-	mat(2,2) = (zFar)  / (zFar - zNear);
-	mat(2,3) = 1.0;
-	mat(3,2) =  -(zNear * zFar) / (zFar - zNear);
+	mat(2,2) = -(zFar+zNear)  / (zFar - zNear);
+	mat(3,2) = -1.0;
+	mat(2,3) =  -(2*zNear * zFar) / (zFar - zNear);
 
 
 	return mat;

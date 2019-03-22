@@ -13,15 +13,18 @@ static void error_callback(int err, const char* description) {
 	fprintf(stderr, "Error: %s\n", description);
 }
 
+bool keys[512];
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
-    if (key == GLFW_KEY_A) {
-	    colVector<float, 3> pos;
-	    pos << 0,0,-0.1;
-	    RenderEngine::get().c.move(pos);
+    if (action == GLFW_PRESS) {
+		keys[key] = 1;
+    }
+	else {
+		keys[key] = 0;
     }
     if (key == GLFW_KEY_S && action == GLFW_PRESS) {
 	    glClearColor(1,0,0,1);
@@ -94,19 +97,13 @@ void RenderEngine::render() {
 	auto cMat = c.getCameraMat();
 	//auto cMat = Identity<float, 4>();
 	//auto mMat = translate(0,0,5)*rotationY(xPos);
-	auto mMat = translate(10*sin(xPos),0,-50);
+	auto mMat = translate(0,0,-5);
 	//auto mMat = rotationX(3.14f/2)*translate(0,0,10);
 	auto pMat = projection(3.14f/4, (float) WindowManager::get().windowWidth / WindowManager::get().windowHeight, 1.0f,100.0f);
 	auto MVPMat  = pMat*cMat*mMat;
-	for (int i = 0; i < 4; i++) {
-		for (int j = 0; j < 4; j++) {
-			std::cout << MVPMat(i,j) << " ";
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
-	std::cout << std::endl;
-	glUniformMatrix4fv(MVP, 1, GL_FALSE, &MVPMat(0));
+	glUniformMatrix4fv(MVP, 1, GL_TRUE, &MVPMat(0));
+	
+
 
 
 	glDrawElements(GL_TRIANGLES, size, GL_UNSIGNED_INT, offset);
@@ -227,6 +224,22 @@ GameEngine& GameEngine::get() {
 }
 
 void GameEngine::update() {
+	if (keys[GLFW_KEY_A]) {
+		RenderEngine::get().c.turn(.01f);
+	}
+	else if (keys[GLFW_KEY_D]) {
+		RenderEngine::get().c.turn(-.01f);
+	}
+	if (keys[GLFW_KEY_W]) {
+	    colVector<float, 3> pos;
+	    pos << 0,0,-0.01;
+	    RenderEngine::get().c.move(pos);
+	}
+	else if (keys[GLFW_KEY_S]) {
+	    colVector<float, 3> pos;
+	    pos << 0,0,0.01;
+	    RenderEngine::get().c.move(pos);
+	}
 	RenderEngine::get().render();
 	glfwPollEvents();
 }
