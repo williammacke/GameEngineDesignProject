@@ -1,6 +1,7 @@
 #include "memMan.h"
 #include <cstdio>
 #include <cstdarg>
+#include <cstring>
 
 
 tempAlloc::tempAlloc() : cap(TEMP_SIZE), temp_level(0) {
@@ -39,6 +40,7 @@ StackAlloc::StackAlloc(size_t cap) {
 		exit(1);
 	}
 	sp = start;
+	lf = start;
 }
 
 StackAlloc::~StackAlloc() {
@@ -46,8 +48,23 @@ StackAlloc::~StackAlloc() {
 		free(start);
 }
 
-void StackAlloc::freeTo(void* nsp) {
-	if (nsp > sp) 
-		return;
-	sp = nsp;
+
+void StackAlloc::freeFrame() {
+	sp = lf;
+	if (lf != start) {
+		sp -= sizeof(void*);
+		memcpy(&lf, sp, sizeof(void*));
+	}
+}
+
+void StackAlloc::setFrame() {
+	memcpy(sp, &lf, sizeof(void*));
+	sp += sizeof(void*);
+	lf = sp;
+}
+
+void* StackAlloc::allocSpace(size_t size) {
+	void *data = sp;
+	sp += size;
+	return data;
 }

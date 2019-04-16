@@ -4,30 +4,48 @@
 #include <string>
 #include <glad/glad.h>
 #include "linAlg.h"
+#include <cassert>
 
-extern GLuint currentVAO;
-extern GLuint currentProgram;
 
-class Model {
-public:
-	Model();
-	Model(GLuint VAO, GLuint shaderProgram, void *offset, size_t size, std::string name, void *data);
-	Model(const Model& m);
-	~Model();
+struct Mesh {
+	Mesh(void* data);
+	~Mesh();
+	void setLoaded(GLuint VAO, GLuint shader, void *offset, size_t baseV, size_t size);
+	void setUnloaded();
+	bool loaded;
 	GLuint VAO;
-	GLuint shaderProgram;
+	GLuint shader;
 	void *offset;
+	size_t baseV;
 	size_t size;
-	std::string name;
 	void *data;
+	colVector<float, 4> mat;
+};
+
+
+
+struct Model {
+	Model(Mesh *meshes, size_t numMeshes);
+	Model(const Model &m);
+	~Model();
+	size_t numMeshes;
+	Mesh *meshes;
 };
 
 class Entity {
 public:
 	Entity(Model *m);
+	Entity(const Entity &e);
 	~Entity();
 	Model *m;
 	Matrix<float, 4, 4> getModel();
+	void scaleBy(float x, float y, float z);
+	void rotateBy(quaternion<float> nrotation);
+	void translateBy(float x, float y, float z);
+	size_t numChildren;
+	Entity *children;
+	Entity *parent;
+	GLuint tex;
 private:
 	Matrix<float, 4, 4> translation;
 	quaternion<float> rotation;

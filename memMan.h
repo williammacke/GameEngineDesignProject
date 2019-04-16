@@ -178,9 +178,11 @@ public:
 	T* alloc(Args&&...args);
 	template <typename T, typename...Args>
 	T* allocNum(size_t num, Args&&...args);
-	void freeTo(void* nsp);
+	void* allocSpace(size_t size);
+	void freeFrame();
+	void setFrame();
 private:
-	void *start, *sp;
+	void *start, *sp, *lf;
 	size_t cap;
 };
 

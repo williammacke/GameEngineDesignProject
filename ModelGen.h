@@ -4,17 +4,12 @@
 #include <vector>
 #include <cstdint>
 #include <glad/glad.h>
+#include "BufferData.h"
 
-struct BufferData {
-	std::vector<float> vertices;
-	std::vector<unsigned int> indices;
-	std::vector<float> normals;
-	std::vector<float> textureCoord;
-};
 
 BufferData genCube();
 BufferData genPlane(int r, int c);
 BufferData genPyramid();
-BufferData genSphere(int prec);
+BufferData genSphere(int rings, int sectors);
 
 #endif

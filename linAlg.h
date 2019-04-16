@@ -6,6 +6,8 @@
 #include <utility>
 #include <xmmintrin.h>
 #include <smmintrin.h>
+#include <cassert>
+
 
 
 
@@ -14,6 +16,7 @@ class Matrix {
 public:
 	Matrix();
 	Matrix(const Matrix<T,r,c>& m);
+	Matrix(std::initializer_list<T> l);
 	~Matrix();
 	const T& operator[] (int i) const;
 	T& operator() (int x, int y);
@@ -176,6 +179,12 @@ Matrix<T,r,c>::Matrix() {
 template<class T, int r, int c>
 Matrix<T,r,c>::Matrix(const Matrix<T,r,c>& m) {
 	std::copy(m.data, m.data+(r*c), data);
+}
+
+template <class T, int r, int c>
+Matrix<T, r, c>::Matrix(std::initializer_list<T> l) {
+	assert(l.size() == r*c);
+	std::copy(l.begin(), l.end(), data);
 }
 
 template <class T, int r, int c>
@@ -820,5 +829,6 @@ Matrix<T, 4, 4> quatToMat(const quaternion<T>& quat) {
 		quat[0],quat[1],quat[2],quat[3];
 	return mat1*mat2;
 }
+
 
 #endif

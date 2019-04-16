@@ -7,7 +7,10 @@
 #include <string>
 #include "Camera.h"
 #include "models.h"
-#include "ModelGen.h"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <nlohmann/json.hpp>
 
 
 class WindowManager {
@@ -58,13 +61,32 @@ public:
 	AssetManager();
 	~AssetManager();
 	static AssetManager& get();
-	Model getModel(int index);
+	Model* getModel(int index);
 	GLuint brickTex;
-	//void LoadModel(std::string filename);
+	void LoadScene(std::string filename);
+	void* LoadModel(std::string filename, size_t *size);
+	GLuint LoadTexture(std::string filename);
+	GLuint GetTexture(size_t i);
 private:
 	size_t numModels;
-	size_t modelCap;
 	Model *modelList;
+	GLuint *textures;
+	size_t numTextures;
+	void processNode(nlohmann::json j, Entity *parent);
+};
+
+class EntityManager {
+public:
+	EntityManager();
+	~EntityManager();
+	void allocSpace(size_t size);
+	Entity* addEntity(const Entity &e);
+	size_t getSize();
+	Entity *getEntity(int index);
+	static EntityManager& get();
+private:
+	size_t size;
+	Entity *entities;
 };
 
 class GameEngine {

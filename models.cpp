@@ -1,28 +1,38 @@
 #include "models.h"
 
-GLuint currentVAO = -1;
-GLuint currentProgram  = -1;
 
-Model::Model() {
+
+Mesh::Mesh(void *data) : data(data),loaded(false) { }
+
+Mesh::~Mesh() { }
+
+void Mesh::setLoaded(GLuint VAO, GLuint shader, void *offset, size_t baseV, size_t size) {
+	this->VAO = VAO;
+	this->shader = shader;
+	this->offset = offset;
+	this->baseV = baseV;
+	this->size = size;
+	this->loaded = true;
 }
 
-Model::Model(GLuint VAO, GLuint shaderProgram, void *offset, 
-		size_t size, std::string name, void *data):
-	VAO(VAO), shaderProgram(shaderProgram), offset(offset), 
-	size(size), name(name), data(data)
+void Mesh::setUnloaded() {
+	this->loaded = false;
+}
+
+
+
+Model::Model(Mesh *meshes, size_t numMeshes) : numMeshes(numMeshes), meshes(meshes) 
 {
-	
 }
 
-Model::Model(const Model& m) : VAO(m.VAO), shaderProgram(m.shaderProgram),
-offset(m.offset), size(m.size), name(m.name), data(m.data)
+Model::Model(const Model& m) : numMeshes(m.numMeshes), meshes(m.meshes)
 {
 }
 
 Model::~Model() { }
 
 
-Entity::Entity(Model *m) : m(m) 
+Entity::Entity(Model *m) : m(m), numChildren(0), children(nullptr), parent(nullptr)
 {
 	translation = Identity<float, 4>();
 	colVector<float, 3> axis;
@@ -32,9 +42,28 @@ Entity::Entity(Model *m) : m(m)
 
 }
 
+Entity::Entity(const Entity &e) : m(e.m), numChildren(e.numChildren), 
+		children(e.children), parent(e.parent) {
+	translation = e.translation;
+	rotation = e.rotation;
+	scaling = e.scaling;
+}
+
 Entity::~Entity() {
 }
 
 Matrix<float, 4, 4> Entity::getModel() {
-	return scaling*quatToMat(rotation)*translation;
+	return translation*quatToMat(rotation)*scaling;
+}
+
+void Entity::scaleBy(float x, float y, float z) {
+	scaling = scale(x,y,z)*scaling;
+}
+
+void Entity::rotateBy(quaternion<float> nrotation) {
+	rotation = quatMult(nrotation, rotation);
+}
+
+void Entity::translateBy(float x, float y, float z) {
+	translation = translate(x,y,z)*translation;
 }
